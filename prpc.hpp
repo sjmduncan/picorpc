@@ -22,6 +22,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <optional>
 #include <exception>
 #include <functional>
 
