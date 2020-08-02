@@ -1,4 +1,4 @@
-# Pico RPC
+# PicoRPC
 
 Really small header only RPC in C++17; No dependencies, BYO transport layer, ~~includes~~ will include C# client.
 
