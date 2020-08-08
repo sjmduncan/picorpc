@@ -170,7 +170,6 @@ namespace prpc{
     public:
       invoker(transport_send_f _send_fun){
         send_fun = std::move(_send_fun);
-        //std::function<string(void)> fp =std::bind(&invoker::next_func,this);
         add("prpc-get-next-function", (std::function<string(void)>)std::bind(&invoker::next_func,this));
         add("prpc-get-version", (std::function<string(void)>)std::bind(&invoker::return_version,this));
       }

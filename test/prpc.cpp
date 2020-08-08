@@ -32,6 +32,8 @@ TEST_CASE("Construction doesn't throw exception", "[invoker]"){
 TEST_CASE("Can fetch invoker version string", "[invoker]"){
   tmp_response = "";
   prpc::invoker srv(inv_dummy_send);
+  srv.invoke("prpc-get-version");
+  REQUIRE(tmp_response == string("PRPC_GOOD") + " \"" + PRPC_VERSION_STR + "\"");
 }
 
 TEST_CASE("Invoke non-existant function doesn't throw, response is error string", "[invoker]"){
@@ -70,18 +72,20 @@ TEST_CASE("Add and invoke void(void) function", "[invoker]"){
   SECTION("Invoking void(void) with a parameter doesn't throw, response is error string"){
     REQUIRE_NOTHROW(srv.invoke("test-voidvoid 99"));
     REQUIRE(tmp_response == "PRPC_INV_ARG_EXTRACT_FAILED");
+    REQUIRE(!funcalled);
   }
 
   SECTION("Invoking non-existant function doesn't throw, response is error string"){
     REQUIRE_NOTHROW(srv.invoke("bogus-fun"));
     REQUIRE(tmp_response == "PRPC_INV_FUN_NOEXIST");
+    REQUIRE(!funcalled);
   }
 
 }
 
 int voidintval = -1;
 void testvoidint(int arg){ voidintval = arg;}
-TEST_CASE("Add and call void(int) function", "[invoker]"){
+TEST_CASE("Add and invoke void(int) function", "[invoker]"){
   tmp_response="";
   voidintval = -1;
   prpc::invoker srv(inv_dummy_send);
@@ -215,7 +219,7 @@ TEST_CASE("Test caller with dummy transport", "[caller-invoker]"){
   
   SECTION("Returning to existing string variables is not okay, simple types are fine"){
     string return_string = caller->call("get_string");
-    string bad_return_string;
+    //string bad_return_string;
     //bad_return_string = caller->call("get_string");// -> compiler error
     
     int getint_return = caller->call("get_int");
