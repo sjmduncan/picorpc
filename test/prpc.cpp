@@ -29,7 +29,7 @@ TEST_CASE("Construction doesn't throw exception", "[invoker]"){
 }
 
 
-TEST_CASE("Can fetch invoker version string", "[invoker]"){
+TEST_CASE("Invoker returns version string with 'PRPC_GOOD' as the status", "[invoker]"){
   tmp_response = "";
   prpc::invoker srv(inv_dummy_send);
   srv.invoke("prpc-get-version");
@@ -80,7 +80,6 @@ TEST_CASE("Add and invoke void(void) function", "[invoker]"){
     REQUIRE(tmp_response == "PRPC_INV_FUN_NOEXIST");
     REQUIRE(!funcalled);
   }
-
 }
 
 int voidintval = -1;
@@ -217,8 +216,9 @@ TEST_CASE("Test caller with dummy transport", "[caller-invoker]"){
     REQUIRE_THROWS(caller->call("concat", "I am an string.", "I'm also a string, but I'm in the wrong place"));
   }
   
-  SECTION("Returning to existing string variables is not okay, simple types are fine"){
+  SECTION("Returning to existing string variables is not okay, primitive types are fine"){
     string return_string = caller->call("get_string");
+    //FIXME: 
     //string bad_return_string;
     //bad_return_string = caller->call("get_string");// -> compiler error
     

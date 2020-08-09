@@ -246,8 +246,7 @@ namespace prpc{
     caller(transport_sendrec_f _rec_fun){
       sendrec_fun = std::move(_rec_fun);
       string remote_version=call("prpc-get-version");
-      //printf("||%s||\n",remote_version.c_str());
-      //assert(("prpc::invoker version is not the same as this version" && (remote_version) == PRPC_VERSION_STR));
+      assert(("prpc::invoker version is not the same as this version" && (remote_version) == PRPC_VERSION_STR));
     }
     template <typename ... TArgs>
     call_return call(string fun_id, TArgs && ... args)
