@@ -16,6 +16,7 @@ You can also invoke lambdas, but you currently can't pass/return STL containers 
 #include "prpc.hpp"
 #include <iostream>
 #include <cassert>
+#include <exception>
 
 using std::clog;
 using std::endl;
@@ -33,21 +34,22 @@ string dummy_transport_call_sendrec(string msg){
   return dummy_transport_buffer;
 }
 
-// Some example functions which will be invokerd via the dummy transport buffer
+// Some example functions which will be invoked by the 'invoke' call in dummy_transport_call_sendrc
+// and return values via the dummy_transport_buffer string.
 int get_int(){
-  clog <<"server: get_int invokerd"<<endl;
+  clog <<"server: get_int invoked"<<endl;
   return 42;
 }
 int add_one(int n){
-  clog << "server: add_one invokerd (n=" << n << ")" << endl;
+  clog << "server: add_one invoked (n=" << n << ")" << endl;
   return n+1;
 }
 string get_string(){ 
-  clog << "server: get_string invokerd" << endl;
+  clog << "server: get_string invoked" << endl;
   return string{"string with spaces in it"};
 }
 string concat(string arg_str, int arg_int) {
-  clog << "server: concat invokerd (arg_str=\"" << arg_str <<"\", arg_int=" << arg_int << ")" << endl;
+  clog << "server: concat invoked (arg_str=\"" << arg_str <<"\", arg_int=" << arg_int << ")" << endl;
   return arg_str + std::to_string(arg_int);
 }
 
@@ -61,6 +63,25 @@ int main(){
   
   // client section ----------------------------------------------------------
   caller = new prpc::caller(dummy_transport_call_sendrec);
+
+  clog << "prpc version=" << caller.call("prpc-get-version") << endl;
+
+  // Print all function names + args added on the server
+  while(true){
+    try{
+    string fun_descriptor = caller.call("prpc-get-next-function");
+    if(fun_descriptor == "PRPC_FUNLIST_END") break;
+    else clog << fun_descriptor << endl;
+    }catch(std::exception e){
+      clog <<"Error in prpc-get-next-function. Ending loop" << endl;
+    }
+  }
+
+  try{
+    caller.call("bogus-function-id");
+  }catch(std::exception e){
+    clog <<"exception trying to call 'bogus-function-id'. Maybe it doesn't exist?" << endl;
+  }
 
   int got_int = caller->call("get_int");
   assert(got_int == 42);
