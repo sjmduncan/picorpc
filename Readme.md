@@ -1,8 +1,8 @@
 # PicoRPC
 
-Really small header only RPC in C++17; No dependencies, BYO transport layer, ~~includes~~ will include C# client.
+Really small header only RPC in C++17; No dependencies, BYO transport layer.
 
-The C++ is modeled on [nanorpc](https://github.com/tdv/nanorpc), but the implementation there didn't quite scratch the itch so here we are. Also includes a copy of [Catch2](https://github.com/catchorg/Catch2) to run tests.
+Modeled on [nanorpc](https://github.com/tdv/nanorpc), but the implementation there didn't quite scratch the itch so here we are. Also includes a copy of [Catch2](https://github.com/catchorg/Catch2) to run tests.
 
 Discovery of all possible invokable functions (and their return/arg types) is also supported at runtime by repeatedly calling `prpc-get-next-function` which returns minimal information about the function: `<function-id> <return-type> <arg1-type> <arg2-type> ...`. When all functions are discovered the return value is `"PRPC_FUNLIST_END"`, after which you're done (or you can start iterating from the beginning again).
 
