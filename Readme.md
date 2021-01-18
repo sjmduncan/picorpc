@@ -1,11 +1,11 @@
 # PicoRPC
 
 C++17 header-only dependency-free function/call [de]serialization and invocation
-for RPC (BYO transport layer). You should probably use [nanorpc](https://github.com/tdv/nanorpc) instead
-(where you get http/SSL and support for STL containers).
+for RPC (BYO transport layer). You should probably use [nanorpc](https://github.com/tdv/nanorpc) instead (where
+you get http/SSL and support for STL containers).
 
 A copy of [Catch2](https://github.com/catchorg/Catch2) is included.
-
+=======
 ## Usage
 
 The following example should build and run.
