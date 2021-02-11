@@ -36,7 +36,7 @@ using std::function;
 namespace prpc{
   template <typename T> constexpr bool _is_tuple = false;
   template <typename ... T> constexpr bool _is_tuple<std::tuple<T...>>   = true;
-  
+
   typedef std::function<void(string)> transport_send_f;
   typedef std::function<string(string)> transport_sendrec_f;
 
@@ -75,7 +75,7 @@ namespace prpc{
       from_serial(string msg_str){
         msg_strm = std::stringstream(msg_str);
         msg_strm >> prefix_str;
-      }     
+      }
   };
   class to_serial : public serial_message{
     protected:
@@ -129,7 +129,6 @@ namespace prpc{
       to_serial(){}
   };
   class invoker{
-    
     template <typename> struct function_signature;
     template <typename R, typename ... T> struct function_signature<std::function<R(T ... )>>{
       using ret_t = std::decay_t<R>;
@@ -265,6 +264,7 @@ namespace prpc{
       if(rp->prefix_str != "PRPC_GOOD"){
         throw new std::exception();
       }
+      
       return std::move(call_return(rp));
     }
   };
