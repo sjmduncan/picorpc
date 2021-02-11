@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Stuart Duncan
+// Copyright (C) 2021 Stuart Duncan
 //
 // This file is part of PicoRPC.
 //
