@@ -17,6 +17,7 @@
 
 #include "catch.hpp"
 #include "prpc.hpp"
+#include <iostream>
 
 std::string tmp_response;
 void inv_dummy_send(string msg){

@@ -21,6 +21,7 @@
 #include <tuple>
 #include <string>
 #include <iomanip>
+#include <cassert>
 #include <sstream>
 #include <optional>
 #include <exception>
@@ -40,14 +41,33 @@ namespace prpc{
   typedef std::function<void(string)> transport_send_f;
   typedef std::function<string(string)> transport_sendrec_f;
 
+  struct UnknownFunctionException : public std::exception {
+    const char * what() const throw ()
+    {
+      return "Function ID provided has not been registered to the prpc invoker";
+    }
+  };
+  struct BadArgListException : public std::exception {
+    const char * what() const throw ()
+    {
+      return "Failed to extract arguments from serialized arg list";
+    }
+  };
+  struct UnknownInvokerException : public std::exception {
+    const char * what() const throw ()
+    {
+      return "Unknown error trying to unpack args or invoke function";
+    }
+  };
+
   class invoker;
   class caller;
 
   class serial_message{
     protected:
-      std::stringstream msg_strm;
       string prefix_str;
     public:
+      std::stringstream msg_strm;
       string serial(){return msg_strm.str(); }
       bool has_conv_failed(){return msg_strm.fail() || (msg_strm.rdbuf()->in_avail() != 0); }
   };
@@ -155,12 +175,17 @@ namespace prpc{
 
     map<string, string>::iterator funiter=func_argstr.begin();
     string next_func(){
-      if(funiter == func_argstr.end()){
+       if(funiter == func_argstr.end()){
         funiter=func_argstr.begin();
         funiter++;
         return string{"PRPC_FUNLIST_END"};
       }
-      string rv=  "\"" + funiter->first + " " + funiter->second + "\"";
+       if (funiter->first == "prpc-get-next-function" || funiter->first == "prpc-get-version") {
+        funiter++;
+        return next_func();
+      }
+
+      string rv = "\"" + funiter->first + " " + funiter->second + "\"";
       funiter++;
       return rv;
     }
@@ -170,11 +195,11 @@ namespace prpc{
     public:
       invoker(transport_send_f _send_fun){
         send_fun = std::move(_send_fun);
-        add("prpc-get-next-function", (std::function<string(void)>)std::bind(&invoker::next_func,this));
-        add("prpc-get-version", (std::function<string(void)>)std::bind(&invoker::return_version,this));
+        add("prpc-get-next-function", "void|void", (std::function<string(void)>)std::bind(&invoker::next_func,this));
+        add("prpc-get-version", "void|void", (std::function<string(void)>)std::bind(&invoker::return_version,this));
       }
       template<typename FUN_T>
-      void add(string fun_id, FUN_T function){
+      void add(string fun_id, string argspec, FUN_T function){
         if(wrapped_functions.count(fun_id) != 0) throw std::exception();
 
         auto fun_wrap = [_function = std::move(function)] (from_serial &inv_params, to_serial &resp){
@@ -191,7 +216,7 @@ namespace prpc{
         };
 
         wrapped_functions[fun_id] = std::move(fun_wrap);
-        func_argstr[fun_id] = fun_id;
+        func_argstr[fun_id] = argspec;
         funiter=func_argstr.begin();
         funiter++;
       }
@@ -205,7 +230,7 @@ namespace prpc{
         }else{
           try{
             wrapped_functions[inv_params.prefix_str](inv_params, ret_param);
-          }catch(std::exception e){
+          }catch(std::exception& e){
             ret_param.reinit("PRPC_INV_EXCEPT");
             ret_param.append(e.what());
           }
@@ -245,8 +270,8 @@ namespace prpc{
     public:
     caller(transport_sendrec_f _rec_fun){
       sendrec_fun = std::move(_rec_fun);
-      string remote_version=call("prpc-get-version");
-      assert(("prpc::invoker version is not the same as this version" && (remote_version) == PRPC_VERSION_STR));
+      //string remote_version=call("prpc-get-version");
+      //assert(("prpc::invoker version is not the same as this version" && (remote_version) == PRPC_VERSION_STR));
     }
     template <typename ... TArgs>
     call_return call(string fun_id, TArgs && ... args)
@@ -259,13 +284,39 @@ namespace prpc{
       string response = sendrec_fun(params.serial());
 
       //FIXME: ugly memory management
-      if(rp) delete rp;
+      if (rp) delete rp;
       rp = new from_serial(response);
-      if(rp->prefix_str != "PRPC_GOOD"){
-        throw new std::exception();
+      if (rp->prefix_str == "PRPC_GOOD") {
+        return call_return(rp);
       }
-      
-      return std::move(call_return(rp));
+      else if (rp->prefix_str == "PRPC_INV_FUN_NOEXIST") {
+        throw UnknownFunctionException();
+      }
+      else if (rp->prefix_str == "PRPC_INV_ARG_EXTRACT_FAILED") {
+        throw BadArgListException();
+      }
+      else {
+        throw UnknownInvokerException();
+      }
+    }
+    call_return call(string fun_inv_string) {
+      string response = sendrec_fun(fun_inv_string);
+
+      // FIXME: ugly memory management
+      if (rp) delete rp;
+      rp = new from_serial(response);
+      if (rp->prefix_str == "PRPC_GOOD") {
+        return call_return(rp);
+      }
+      else if (rp->prefix_str == "PRPC_INV_FUN_NOEXIST") {
+        throw UnknownFunctionException();
+      }
+      else if (rp->prefix_str == "PRPC_INV_ARG_EXTRACT_FAILED") {
+        throw BadArgListException();
+      }
+      else {
+        throw UnknownInvokerException();
+      }
     }
   };
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.13.0)
-Project(urpc_test
+Project(prpc_test
         VERSION 0.1
         DESCRIPTION "Tests for PicoRPC"
         LANGUAGES CXX)
